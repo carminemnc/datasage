@@ -1,0 +1,6 @@
+include README.md
+include requirements.txt
+include LICENSE
+include datasage/styles/*.mplstyle
+include datasage/assets/*.png
+recursive-include datasage *.py

@@ -1,0 +1,74 @@
+##### figure
+figure.figsize: 8.0, 5.5
+figure.titlesize: 14
+figure.autolayout: True
+
+##### title
+axes.titlesize: 12
+axes.titlelocation : left
+axes.titlepad: 20 # bottom margin title
+
+##### x-axis
+xtick.labelsize: 8
+
+
+##### y-axis
+ytick.labelsize: 8
+
+
+##### general settings
+
+legend.fontsize: 10
+axes.spines.right: False
+axes.spines.top: False
+lines.linewidth: 2.25
+axes.linewidth: 0.3
+axes.labelsize: 9
+axes.grid: False
+# axes.labelweight: bold
+legend.framealpha: 0.7
+legend.handlelength: 1
+legend.frameon: True
+
+##### custom palette
+
+    # '0085a1': blue-munsell
+    # '006b86': cerulean
+    # '00526c': midnight-green
+    # '008b8b': dark-cyan
+    # '5a5856': davys-gray
+    # '949799': battleship-gray
+    # '242728': eerie-black
+    # 'eaeaea': platinum
+
+    # plots palette
+    # '0085a1': blue-munsell
+    # 'eaeaea' : platinum
+    # '8A9A5B': moss-green
+    # 'D7263D': crimson
+    # '0197F6': dodgerblue
+    # 'FFF94F': icterine
+    # 'E9724C': sunglow
+    # 'E27396': rose-pompadour
+    # '806D40': coyote
+    # '7ec995': emerald
+
+axes.prop_cycle: cycler('color', ['0085a1','242728','D7263D','8A9A5B','0197F6','610C9F','E9724C','E27396','806D40','7ec995'])
+
+##### light-theme settings
+
+legend.edgecolor: 242728
+legend.labelcolor: 000000 # black
+xtick.color : 242728
+ytick.color: 242728
+xtick.labelcolor: 242728
+ytick.labelcolor: 242728
+axes.labelcolor: 242728
+axes.titlecolor: 242728
+axes.edgecolor: 242728
+figure.facecolor: eaeaea
+figure.edgecolor: eaeaea
+savefig.facecolor: eaeaea
+savefig.edgecolor: eaeaea
+axes.facecolor: eaeaea
+
