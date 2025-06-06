@@ -61,7 +61,7 @@ class Leonardo:
                    ha='center',
                    color=font_color)
         ax.annotate(target_zero_name,
-                   xy=(10(10, -0.1),
+                   xy=(10,-0.1),
                    va='center',
                    ha='center',
                    fontsize=10,
