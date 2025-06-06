@@ -2,7 +2,7 @@ cdsapi
 fitter
 geopandas
 IPython
-mango-optimizer
+arm-mango
 mapply
 matplotlib
 miceforest

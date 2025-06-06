@@ -6,3 +6,10 @@
 - Data preprocessing with advanced normalization and outlier management capabilities
 - Modeling tools with integrated Bayesian optimization
 - Customizable visualizations with predefined dark and light themes
+
+# Installation
+
+```
+pip install git+https://github.com/carminemnc/datasage.git
+
+```
