@@ -43,7 +43,7 @@ class Leonardo:
         
         # Create plot if ax is not provided
         if ax is None:
-            fig, ax = plt.subplots(1, 1, figsize=figsize, dpi=300)
+            fig, ax = plt.subplots(1, 1, figsize=figsize)
         
         # Create stacked horizontal bars
         ax.barh(column_name, target_ratios[0], alpha=0.9)
