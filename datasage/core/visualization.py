@@ -18,6 +18,7 @@ class Leonardo:
                          column_name: str,
                          target_zero_name: str,
                          target_one_name: str,
+                         ax: Optional[plt.Axes] = None,
                          font_color: str = 'white',
                          figsize: Tuple[float, float] = (6.5, 2),
                          plot_title: Optional[str] = None) -> None:
@@ -29,6 +30,7 @@ class Leonardo:
             column_name: Name of the binary column to plot
             target_zero_name: Label for the '0' class
             target_one_name: Label for the '1' class
+            ax: Optional matplotlib axes object to plot on
             font_color: Color of the text annotations
             figsize: Width and height of the figure in inches
             plot_title: Optional title for the plot
@@ -39,8 +41,9 @@ class Leonardo:
         # Calculate target ratios
         target_ratios = data[column_name].value_counts(normalize=True) * 100
         
-        # Create plot
-        fig, ax = plt.subplots(1, 1, figsize=figsize, dpi=150)
+        # Create plot if ax is not provided
+        if ax is None:
+            fig, ax = plt.subplots(1, 1, figsize=figsize, dpi=300)
         
         # Create stacked horizontal bars
         ax.barh(column_name, target_ratios[0], alpha=0.9)
@@ -83,7 +86,7 @@ class Leonardo:
         if plot_title:
             plt.title(plot_title)
             
-        plt.show()
+        return ax
     
     @staticmethod
     def insights_box(obj_figure: plt.Figure,
