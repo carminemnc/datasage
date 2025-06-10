@@ -2,6 +2,7 @@ import matplotlib.pyplot as plt
 import matplotlib.lines as lines
 from typing import Optional, Tuple
 import pandas as pd
+import seaborn as sns
 
 class Leonardo:
     """
@@ -134,3 +135,89 @@ class Leonardo:
             ax.bar_label(c, fmt=fmt, label_type='center', color=label_color)
         
         return ax
+    
+    @staticmethod
+    def ridge_plot(data: pd.DataFrame, 
+                x_var: str, 
+                group_var: str, 
+                cmap=None, 
+                colors=None, 
+                height: float = 1, 
+                aspect: float = 15, 
+                title: str = None) -> sns.FacetGrid:
+        """
+        Create a ridge plot using seaborn's FacetGrid and kdeplot.
+        
+        Parameters:
+        -----------
+        data : DataFrame
+            The input pandas DataFrame
+        x_var : str
+            The column name for the x-axis variable (continuous)
+        group_var : str
+            The column name for grouping (categorical)
+        cmap : matplotlib colormap or str, optional
+            Colormap to use for the gradient (e.g., 'viridis', 'plasma')
+        colors : list, optional
+            Custom list of colors to use instead of a colormap
+        height : float, optional
+            Height of each facet (default: 1)
+        aspect : float, optional
+            Aspect ratio of each facet
+        title : str, optional
+            Plot title
+        
+        Returns:
+        --------
+        g : FacetGrid
+            The seaborn FacetGrid object with the ridge plot
+        """
+        # Determine palette
+        n_cats = len(data[group_var].unique())
+        
+        if colors is not None:
+            palette = colors
+        elif cmap is not None:
+            if isinstance(cmap, str):
+                palette = sns.color_palette(cmap, n_cats)
+            else:
+                palette = [cmap(i/(n_cats-1)) for i in range(n_cats)]
+        else:
+            palette = sns.color_palette("viridis", n_cats)
+        
+        # Create the FacetGrid
+        g = sns.FacetGrid(data, row=group_var, hue=group_var, aspect=aspect, height=height, palette=palette)
+        
+        # Draw the densities
+        g.map(sns.kdeplot, x_var, bw_adjust=.5, clip_on=False, fill=True, alpha=1, linewidth=1.5)
+        g.map(sns.kdeplot, x_var, clip_on=False, color="w", lw=2, bw_adjust=.5)
+        
+        # Add a horizontal line at y=0
+        g.refline(y=0, linewidth=2, linestyle="-", color=None, clip_on=False)
+        
+        # Add labels
+        def label(x, color, label):
+            ax = plt.gca()
+            ax.text(0, .4, label, color=color, ha="left", va="center", transform=ax.transAxes, fontsize=12)
+        
+        g.map(label, x_var)
+        
+        # Adjust layout and formatting
+        g.figure.subplots_adjust(hspace=0.1)
+        g.set_titles("")
+        g.set(yticks=[], ylabel="")
+        
+        # Format axes
+        for ax in g.axes.flat:
+            ax.spines['left'].set_visible(False)
+            ax.spines['right'].set_visible(False)
+            ax.spines['top'].set_visible(False)
+            ax.spines['bottom'].set_visible(True)
+            ax.xaxis.set_visible(True)
+            ax.tick_params(axis='x', colors='black')
+        
+        # Add title if provided
+        if title:
+            plt.suptitle(title, y=1.02)
+            
+        return g
