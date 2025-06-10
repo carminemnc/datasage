@@ -221,3 +221,66 @@ class Leonardo:
             plt.suptitle(title, y=1.02)
             
         return g
+
+    @staticmethod
+    def dumbbell_plot(df: pd.DataFrame, 
+                            group_col: str, 
+                            category_col: str, 
+                            value_col: str, 
+                            ax: Optional[plt.Axes] = None,
+                            title: Optional[str] = None, 
+                            subtitle: Optional[str] = None, 
+                            figsize: Tuple[float, float] = (10, 4)) -> plt.Figure:
+        """
+        Create a dumbbell plot comparing two groups across categories.
+        
+        Args:
+            df: DataFrame with the raw data
+            group_col: Column name containing the two groups to compare
+            category_col: Column name containing the categories for y-axis
+            value_col: Column name containing the values to plot
+            ax: Optional matplotlib axis to plot on
+            title: Optional title for the plot
+            subtitle: Optional subtitle for the plot
+            figsize: Width and height of the figure in inches
+            
+        Returns:
+            The matplotlib Figure object with the plot
+        """
+        # Pivot data to get groups as columns and categories as rows
+        pivot_data = df.pivot_table(index=category_col, columns=group_col, values=value_col)
+        groups = pivot_data.columns.tolist()
+        
+        # Create figure if ax not provided
+        if ax is None:
+            fig, ax = plt.subplots(figsize=figsize)
+        else:
+            fig = ax.figure
+        
+        # Remove spines
+        for s in ["right", "top", "bottom", "left"]:
+            ax.spines[s].set_visible(False)
+        
+        # Define range for y-axis and plot elements
+        my_range = range(1, len(pivot_data) + 1)
+        ax.hlines(y=my_range, xmin=pivot_data[groups[0]], xmax=pivot_data[groups[1]], 
+                color='gray', alpha=0.4)
+        ax.scatter(pivot_data[groups[0]], my_range, s=100, label=groups[0])
+        ax.scatter(pivot_data[groups[1]], my_range, s=100, label=groups[1])
+        
+        # Add mean lines
+        ax.axvline(pivot_data[groups[0]].mean(), color='gray', linewidth=0.4, linestyle='dashdot')
+        ax.axvline(pivot_data[groups[1]].mean(), color='gray', linewidth=0.4, linestyle='dashdot')
+        
+        # Set y-tick labels and remove tick marks
+        ax.set_yticks(my_range)
+        ax.set_yticklabels(pivot_data.index)
+        ax.tick_params(axis='both', which='both', length=0)
+        
+        # Add title and subtitle
+        if title:
+            ax.text(0, len(pivot_data) + 1.2, title, fontsize=14, fontweight='bold')
+        if subtitle:
+            ax.text(0, len(pivot_data) + 0.6, subtitle, fontsize=10)
+        
+        return fig
