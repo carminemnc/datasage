@@ -284,3 +284,45 @@ class Leonardo:
             ax.text(0, len(pivot_data) + 0.6, subtitle, fontsize=10)
         
         return fig
+    
+    @staticmethod
+    def lollipop_plot(df: pd.DataFrame, 
+                    value_col: str, 
+                    label_col: str, 
+                    ax: Optional[plt.Axes] = None, 
+                    n: int = 15, 
+                    markersize: int = 10) -> Tuple[Optional[plt.Figure], plt.Axes]:
+        """
+        Create a lollipop plot showing values with markers connected to a baseline.
+        
+        Args:
+            df: DataFrame containing the data
+            value_col: Column name for the values (x-axis)
+            label_col: Column name for the labels (y-axis)
+            ax: Optional matplotlib axes object to plot on
+            n: Number of items to display (default: 15)
+            markersize: Size of the marker points (default: 10)
+            
+        Returns:
+            Tuple containing the figure (if created) and axes objects
+        """
+        fig = None
+        if ax is None:
+            fig, ax = plt.subplots(figsize=(10, 7))
+        
+        temp = df[:n]
+        my_range = range(1, len(temp[label_col])+1)
+        
+        # Plot lines
+        for i, val in enumerate(temp[value_col]):
+            ax.plot([0, val], [my_range[i], my_range[i]], color='gray', alpha=0.8)
+            ax.plot(val, my_range[i], 'o', color='#0085a1', markersize=markersize)
+        
+        # Remove spines
+        for s in ['top', 'right', 'bottom', 'left']:
+            ax.spines[s].set_visible(False)
+        
+        ax.set_yticks(my_range)
+        ax.set_yticklabels(temp[label_col])
+        
+        return fig, ax
