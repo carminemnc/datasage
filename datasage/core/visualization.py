@@ -72,30 +72,53 @@ class Leonardo:
     @staticmethod
     def insights_box(fig: plt.Figure,
                     text: str,
+                    position: str = 'right',
                     fontsize: int = 14,
                     color: str = 'black',
-                    x: float = 1.03,
-                    y: float = 0.7,
+                    x: float = None,
+                    y: float = None,
                     weight: str = 'normal') -> None:
         """
-        Adds an insights section with text to the right side of a matplotlib figure.
+        Adds an insights section with text to any side of a matplotlib figure.
         
         Args:
             fig: Matplotlib figure object to add insights to
             text: Text content for the insights section
+            position: Position of the insights box ('right', 'left', 'top', 'bottom')
             fontsize: Font size for the text
             color: Color of the text and separator line
-            x: X-coordinate for text placement
-            y: Y-coordinate for text placement
+            x: X-coordinate for text placement (overrides default position)
+            y: Y-coordinate for text placement (overrides default position)
             weight: Font weight for the text
             
         Returns:
             None
         """
-        # Add separator line and text in one block
-        fig.lines.extend([lines.Line2D([1.01, 1.01], [0.1, 0.9], 
-                                     transform=fig.transFigure,
-                                     figure=fig, color=color, lw=0.5)])
+        # Set default coordinates and line positions based on position
+        if position == 'right':
+            default_x, default_y = 1.03, 0.7
+            line_coords = ([1.01, 1.01], [0.1, 0.9])
+        elif position == 'left':
+            default_x, default_y = -0.03, 0.7
+            line_coords = ([-0.01, -0.01], [0.1, 0.9])
+        elif position == 'top':
+            default_x, default_y = 0.5, 1.03
+            line_coords = ([0.1, 0.9], [1.01, 1.01])
+        elif position == 'bottom':
+            default_x, default_y = 0.5, -0.03
+            line_coords = ([0.1, 0.9], [-0.01, -0.01])
+        else:  # Default to right if invalid position
+            default_x, default_y = 1.03, 0.7
+            line_coords = ([1.01, 1.01], [0.1, 0.9])
+        
+        # Use provided coordinates or defaults
+        x = x if x is not None else default_x
+        y = y if y is not None else default_y
+        
+        # Add separator line and text
+        fig.lines.extend([lines.Line2D(line_coords[0], line_coords[1], 
+                                    transform=fig.transFigure,
+                                    figure=fig, color=color, lw=0.5)])
         fig.text(x, y, text, fontsize=fontsize, color=color, fontweight=weight)
         
     @staticmethod
