@@ -3,6 +3,7 @@ import matplotlib.lines as lines
 from typing import Optional, Tuple
 import pandas as pd
 import seaborn as sns
+import requests
 
 class Leonardo:
     """
@@ -14,6 +15,56 @@ class Leonardo:
         stacked_bars: Creates a stacked bar chart showing distribution across categories
     """
     
+    @staticmethod
+    def download_google_font(repo_name: str, font_name: str, save_locally: bool = True) -> str:
+        """
+        Download a font from Google Fonts GitHub repository.
+        Google fonts repository: https://github.com/google/fonts/tree/main/ofl
+        
+        Parameters:
+        -----------
+        repo_name : str
+            Repository name in Google Fonts (e.g., 'notoserif', 'roboto')
+        font_name : str
+            Font file name without extension (e.g., 'NotoSerif[wdth,wght]')
+        save_locally : bool
+            If True, save the font to the current directory
+            
+        Returns:
+        --------
+        str
+            Local path to the downloaded font file
+            
+        Example:
+        --------
+        font_repo = 'notoserif'
+        font_name = 'NotoSerif[wdth,wght]'
+        download_google_font(font_repo, font_name)
+        fm.fontManager.addfont(f'{font_name}.ttf')
+        fm._load_fontmanager(try_read_cache=False)
+        font_prop = fm.FontProperties(fname=f'{font_name}.ttf')
+        font_family = font_prop.get_name()
+        plt.rcParams['font.family'] = font_family
+        """
+            
+        # GitHub raw content URL
+        url = f'https://github.com/google/fonts/raw/main/ofl/{repo_name}/{font_name}.ttf'
+        
+        # Download font
+        response = requests.get(url)
+        
+        # Local file path
+        local_path = f"{font_name}.ttf"
+        
+        # Save to local file
+        if save_locally:
+            with open(local_path, 'wb') as f:
+                f.write(response.content)
+        
+        return
+
+
+
     @staticmethod
     def binary_ratio_plot(data: pd.DataFrame,
                          column_name: str,
