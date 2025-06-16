@@ -164,10 +164,10 @@ class Leonardo:
                 x_var: str, 
                 group_var: str, 
                 cmap=None, 
-                colors=None, 
+                colors=None,
+                fontsize_facets: int = 12, 
                 height: float = 1, 
-                aspect: float = 15, 
-                title: str = None) -> sns.FacetGrid:
+                aspect: float = 15) -> sns.FacetGrid:
         """
         Create a ridge plot using seaborn's FacetGrid and kdeplot.
         
@@ -221,7 +221,7 @@ class Leonardo:
         # Add labels
         def label(x, color, label):
             ax = plt.gca()
-            ax.text(0, .4, label, color=color, ha="left", va="center", transform=ax.transAxes, fontsize=12)
+            ax.text(0, .4, label, color=color, ha="left", va="center", transform=ax.transAxes, fontsize=fontsize_facets)
         
         g.map(label, x_var)
         
@@ -238,10 +238,6 @@ class Leonardo:
             ax.spines['bottom'].set_visible(True)
             ax.xaxis.set_visible(True)
             ax.tick_params(axis='x', colors='black')
-        
-        # Add title if provided
-        if title:
-            plt.suptitle(title, y=1.02)
             
         return g
 
