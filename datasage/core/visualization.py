@@ -9,8 +9,9 @@ import os
 from matplotlib.colors import Colormap
 
 class Leonardo:
+    
     """
-    A class for creating specialized visualization plots.
+    A collection of specialized data visualization tools.
     """
     
     # Class-level cache for downloaded fonts
@@ -210,13 +211,13 @@ class Leonardo:
     
     @staticmethod
     def ridge_plot(data: pd.DataFrame, 
-                x_var: str, 
-                group_var: str, 
-                cmap=None, 
-                colors=None,
-                fontsize_facets: int = 12, 
-                height: float = 1, 
-                aspect: float = 15) -> sns.FacetGrid:
+                   x_var: str, 
+                   group_var: str, 
+                   cmap=None, 
+                   colors=None,
+                   fontsize_facets: int = 12, 
+                   height: float = 1, 
+                   aspect: float = 15) -> sns.FacetGrid:
         """
         Create a ridge plot using seaborn's FacetGrid and kdeplot.
         
@@ -236,8 +237,6 @@ class Leonardo:
             Height of each facet (default: 1)
         aspect : float, optional
             Aspect ratio of each facet
-        title : str, optional
-            Plot title
         
         Returns:
         --------
@@ -279,12 +278,9 @@ class Leonardo:
         g.set_titles("")
         g.set(yticks=[], ylabel="")
         
-        # Format axes
+        # Format axes using _clean_axes method, but keep bottom spine visible
         for ax in g.axes.flat:
-            ax.spines['left'].set_visible(False)
-            ax.spines['right'].set_visible(False)
-            ax.spines['top'].set_visible(False)
-            ax.spines['bottom'].set_visible(True)
+            Leonardo._clean_axes(ax, spines_to_remove=['left', 'right', 'top'])
             ax.xaxis.set_visible(True)
             ax.tick_params(axis='x', colors='black')
             
