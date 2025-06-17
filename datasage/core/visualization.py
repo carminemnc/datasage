@@ -25,6 +25,72 @@ class Leonardo:
         for spine in spines_to_remove:
             ax.spines[spine].set_visible(False)
 
+    @staticmethod
+    def create_layout(layout_spec: List[Tuple[int, int, int, int]], 
+                    figsize: Tuple[float, float] = (10, 6)) -> Tuple[plt.Figure, List[plt.Axes]]:
+        """
+        Create a flexible plot layout based on a specification.
+        
+        Parameters:
+        -----------
+        layout_spec : list of tuples
+            List of (row, col, rowspan, colspan) for each axis
+            Example: [(0,0,1,1), (0,1,1,1), (1,0,1,2)] creates a layout with
+            two plots on top row and one spanning the bottom row
+        figsize : tuple
+            Figure size (width, height)
+            
+        Returns:
+        --------
+        fig : Figure object
+        axes : list of Axes objects
+        
+        Common Layout Specifications:
+        ----------------------------
+        Single row layouts:
+        - 1 plot: [(0,0,1,1)]
+        - 2 plots in a row: [(0,0,1,1), (0,1,1,1)]
+        - 3 plots in a row: [(0,0,1,1), (0,1,1,1), (0,2,1,1)]
+        
+        Single column layouts:
+        - 1 plot: [(0,0,1,1)]
+        - 2 plots in a column: [(0,0,1,1), (1,0,1,1)]
+        - 3 plots in a column: [(0,0,1,1), (1,0,1,1), (2,0,1,1)]
+        
+        Grid layouts:
+        - 2x2 grid: [(0,0,1,1), (0,1,1,1), (1,0,1,1), (1,1,1,1)]
+        - 3x3 grid: [(0,0,1,1), (0,1,1,1), (0,2,1,1), 
+                    (1,0,1,1), (1,1,1,1), (1,2,1,1), 
+                    (2,0,1,1), (2,1,1,1), (2,2,1,1)]
+        
+        Mixed layouts:
+        - 2 plots on top, 1 spanning bottom: [(0,0,1,1), (0,1,1,1), (1,0,1,2)]
+        - 1 snapping top, 2 plots on bottom: [(0,0,1,2), (1,0,1,1), (1,1,1,1)]
+        - 1 large plot with 2 smaller ones to right: [(0,0,2,1), (0,1,1,1), (1,1,1,1)]
+        - 1 large plot with 2 smaller ones to left: [(0,1,2,1), (0,0,1,1), (1,0,1,1)]
+        - Sidebar with 3 plots on the left and one on the right: [(0,0,1,2), (1,0,1,2), (2,0,1,2), (0,2,3,1)]
+        - Sidebar with 3 plots on the right and one on the left: [(0,0,3,1), (0,1,1,2), (1,1,1,2), (2,1,1,2)]
+        - 1 spanning top, 3 plots on bottom: [(0,0,1,3), (1,0,1,1), (1,1,1,1), (1,2,1,1)]
+        - 1 spanning bottom, 3 plots on top: [(0,0,1,1), (0,1,1,1), (0,2,1,1), (1,0,1,3)]
+        - 3x3 grid with center empty: [(0,0,1,1), (0,1,1,1), (0,2,1,1), (1,0,1,1), (1,2,1,1), (2,0,1,1), (2,1,1,1), (2,2,1,1)]
+        - Uneven grid: [(0,0,2,1), (0,1,1,1), (1,1,1,1), (2,0,1,2)]
+        """
+        # Calculate grid dimensions
+        max_row = max(spec[0] + spec[2] for spec in layout_spec)
+        max_col = max(spec[1] + spec[3] for spec in layout_spec)
+        
+        # Create figure and gridspec
+        fig = plt.figure(figsize=figsize)
+        gs = fig.add_gridspec(max_row, max_col)
+        
+        # Create axes
+        axes = []
+        for row, col, rowspan, colspan in layout_spec:
+            ax = fig.add_subplot(gs[row:row+rowspan, col:col+colspan])
+            axes.append(ax)
+        
+        return fig, axes
+
     @classmethod
     def setup_google_font(cls, 
                           repo_name: str = 'notoserif', 
