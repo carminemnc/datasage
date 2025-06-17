@@ -1,79 +1,127 @@
 import matplotlib.pyplot as plt
 import matplotlib.lines as lines
-from typing import Optional, Tuple
+from typing import Optional, Tuple, Union, Dict, List, Any
 import pandas as pd
 import seaborn as sns
 import requests
+import matplotlib.font_manager as fm
+import os
+from matplotlib.colors import Colormap
 
 class Leonardo:
     """
     A class for creating specialized visualization plots.
-    
-    Static Methods:
-        binary_ratio_plot: Creates a horizontal bar chart showing binary target distribution
-        insights_box: Adds an insights section to an existing matplotlib figure
-        stacked_bars: Creates a stacked bar chart showing distribution across categories
     """
     
+    # Class-level cache for downloaded fonts
+    _font_cache: Dict[str, str] = {}
+
     @staticmethod
-    def download_google_font(repo_name: str, font_name: str, save_locally: bool = True) -> str:
+    def _clean_axes(ax: plt.Axes, spines_to_remove: List[str] = ['top', 'right', 'bottom', 'left']) -> None:
         """
-        Download a font from Google Fonts GitHub repository.
-        Google fonts repository: https://github.com/google/fonts/tree/main/ofl
-        
-        Parameters:
-        -----------
-        repo_name : str
-            Repository name in Google Fonts (e.g., 'notoserif', 'roboto')
-        font_name : str
-            Font file name without extension (e.g., 'NotoSerif[wdth,wght]')
-        save_locally : bool
-            If True, save the font to the current directory
-            
-        Returns:
-        --------
-        str
-            Local path to the downloaded font file
-            
-        Example:
-        --------
-        font_repo = 'notoserif'
-        font_name = 'NotoSerif[wdth,wght]'
-        download_google_font(font_repo, font_name)
-        fm.fontManager.addfont(f'{font_name}.ttf')
-        fm._load_fontmanager(try_read_cache=False)
-        font_prop = fm.FontProperties(fname=f'{font_name}.ttf')
-        font_family = font_prop.get_name()
-        plt.rcParams['font.family'] = font_family
+        Helper method to remove spines and clean up axes.
         """
+        for spine in spines_to_remove:
+            ax.spines[spine].set_visible(False)
+
+    @classmethod
+    def setup_google_font(cls, 
+                          repo_name: str = 'notoserif', 
+                          font_name: str = 'NotoSerif[wdth,wght]', 
+                          save_locally: bool = True, 
+                          force_download: bool = False) -> str:
+        """
+        Download a font from Google Fonts GitHub repository with caching.
+        """
+        # Check cache first
+        cache_key = f"{repo_name}_{font_name}"
+        if not force_download and cache_key in cls._font_cache:
+            return cls._font_cache[cache_key]
             
-        # GitHub raw content URL
-        url = f'https://github.com/google/fonts/raw/main/ofl/{repo_name}/{font_name}.ttf'
-        
-        # Download font
-        response = requests.get(url)
-        
         # Local file path
         local_path = f"{font_name}.ttf"
         
-        # Save to local file
-        if save_locally:
-            with open(local_path, 'wb') as f:
-                f.write(response.content)
+        # Only download if file doesn't exist or force_download is True
+        if force_download or not os.path.exists(local_path):
+            # GitHub raw content URL
+            url = f'https://github.com/google/fonts/raw/main/ofl/{repo_name}/{font_name}.ttf'
+            
+            try:
+                # Download font
+                response = requests.get(url, timeout=10)
+                response.raise_for_status()  # Raise exception for HTTP errors
+                
+                # Save to local file
+                if save_locally:
+                    with open(local_path, 'wb') as f:
+                        f.write(response.content)
+            except (requests.RequestException, IOError) as e:
+                raise ValueError(f"Failed to download or save font: {e}")
         
-        return
-
-
+        # Add the font
+        fm.fontManager.addfont(local_path)
+        fm._load_fontmanager(try_read_cache=False)
+        font_prop = fm.FontProperties(fname=local_path)
+        font_family = font_prop.get_name()
+        
+        # Cache the result
+        cls._font_cache[cache_key] = font_family
+        return font_family
+    
+    @staticmethod
+    def insights_box(fig: plt.Figure,
+                     text: str,
+                     position: str = 'right',
+                     fontsize: int = 14,
+                     color: str = 'black',
+                     x: float = None,
+                     y: float = None,
+                     weight: str = 'normal') -> None:
+        """
+        Adds an insights section with text to any side of a matplotlib figure.
+        
+        Args:
+            fig: Matplotlib figure object to add insights to
+            text: Text content for the insights section (supports multi-line text)
+            position: Position of the insights box ('right', 'left', 'top', 'bottom')
+            fontsize: Font size for the text
+            color: Color of the text and separator line
+            x: X-coordinate for text placement (overrides default position)
+            y: Y-coordinate for text placement (overrides default position)
+            weight: Font weight for the text
+        """
+        # Position lookup dictionary for cleaner code
+        positions = {
+            'right': ((1.03, 0.7), ([1.01, 1.01], [0.1, 0.9])),
+            'left': ((-0.03, 0.7), ([-0.01, -0.01], [0.1, 0.9])),
+            'top': ((0.5, 1.03), ([0.1, 0.9], [1.01, 1.01])),
+            'bottom': ((0.5, -0.03), ([0.1, 0.9], [-0.01, -0.01]))
+        }
+        
+        # Get position or default to right
+        (default_x, default_y), line_coords = positions.get(position, positions['right'])
+        
+        # Use provided coordinates or defaults
+        x = x if x is not None else default_x
+        y = y if y is not None else default_y
+        
+        # Add separator line
+        fig.lines.append(lines.Line2D(line_coords[0], line_coords[1], 
+                                    transform=fig.transFigure,
+                                    figure=fig, color=color, lw=0.5))
+        
+        # Add text with support for multi-line text
+        fig.text(x, y, text, fontsize=fontsize, color=color, 
+                fontweight=weight, verticalalignment='top')
 
     @staticmethod
     def binary_ratio_plot(data: pd.DataFrame,
-                         column_name: str,
-                         target_zero_name: str,
-                         target_one_name: str,
-                         ax: Optional[plt.Axes] = None,
-                         font_color: str = 'white',
-                         figsize: Tuple[float, float] = (6.5, 2),
-                         plot_title: Optional[str] = None) -> plt.Axes:
+                          column_name: str,
+                          target_zero_name: str,
+                          target_one_name: str,
+                          ax: Optional[plt.Axes] = None,
+                          font_color: str = 'white',
+                          figsize: Tuple[float, float] = (6.5, 2)) -> plt.Axes:
         """
         Creates a horizontal bar chart showing the distribution of a binary target variable.
         
@@ -85,7 +133,6 @@ class Leonardo:
             ax: Optional matplotlib axes object to plot on
             font_color: Color of the text annotations
             figsize: Width and height of the figure in inches
-            plot_title: Optional title for the plot
             
         Returns:
             The matplotlib axes object with the plot
@@ -103,85 +150,32 @@ class Leonardo:
         ax.set_xlim([0, 100])
         ax.set_xticks([])
         ax.set_yticks([])
-        for spine in ax.spines.values():
-            spine.set_visible(False)
+        Leonardo._clean_axes(ax)
+        
+        # Calculate annotation positions dynamically
+        pos0 = min(max(target_ratios[0] / 2, 10), 40)
+        pos1 = max(min(target_ratios[0] + target_ratios[1] / 2, 90), 60)
         
         # Add annotations for both targets
-        for idx, (pos, label) in enumerate(zip([10, 90], [target_zero_name, target_one_name])):
+        for idx, (pos, label) in enumerate(zip([pos0, pos1], [target_zero_name, target_one_name])):
             ax.annotate(f'{target_ratios[idx]:.2f} %',
                        xy=(pos, column_name),
                        va='center', ha='center', color=font_color)
             ax.annotate(label,
                        xy=(pos, -0.1),
                        va='center', ha='center', fontsize=10, color=font_color)
-        
-        if plot_title:
-            ax.set_title(plot_title)
             
         return ax
     
     @staticmethod
-    def insights_box(fig: plt.Figure,
-                    text: str,
-                    position: str = 'right',
-                    fontsize: int = 14,
-                    color: str = 'black',
-                    x: float = None,
-                    y: float = None,
-                    weight: str = 'normal') -> None:
-        """
-        Adds an insights section with text to any side of a matplotlib figure.
-        
-        Args:
-            fig: Matplotlib figure object to add insights to
-            text: Text content for the insights section
-            position: Position of the insights box ('right', 'left', 'top', 'bottom')
-            fontsize: Font size for the text
-            color: Color of the text and separator line
-            x: X-coordinate for text placement (overrides default position)
-            y: Y-coordinate for text placement (overrides default position)
-            weight: Font weight for the text
-            
-        Returns:
-            None
-        """
-        # Set default coordinates and line positions based on position
-        if position == 'right':
-            default_x, default_y = 1.03, 0.7
-            line_coords = ([1.01, 1.01], [0.1, 0.9])
-        elif position == 'left':
-            default_x, default_y = -0.03, 0.7
-            line_coords = ([-0.01, -0.01], [0.1, 0.9])
-        elif position == 'top':
-            default_x, default_y = 0.5, 1.03
-            line_coords = ([0.1, 0.9], [1.01, 1.01])
-        elif position == 'bottom':
-            default_x, default_y = 0.5, -0.03
-            line_coords = ([0.1, 0.9], [-0.01, -0.01])
-        else:  # Default to right if invalid position
-            default_x, default_y = 1.03, 0.7
-            line_coords = ([1.01, 1.01], [0.1, 0.9])
-        
-        # Use provided coordinates or defaults
-        x = x if x is not None else default_x
-        y = y if y is not None else default_y
-        
-        # Add separator line and text
-        fig.lines.extend([lines.Line2D(line_coords[0], line_coords[1], 
-                                    transform=fig.transFigure,
-                                    figure=fig, color=color, lw=0.5)])
-        fig.text(x, y, text, fontsize=fontsize, color=color, fontweight=weight)
-        
-    @staticmethod
-    def stacked_bars(data: pd.DataFrame,
-                    x: str,
-                    y: str,
-                    ax: plt.Axes,
-                    title: str,
-                    normalize: str = 'index',
-                    fmt: str = '%.1f%%',
-                    label_color: str = 'white',
-                    width: float = 0.9) -> plt.Axes:
+    def stacked_bars_plot(data: pd.DataFrame,
+                          x: str,
+                          y: str,
+                          ax: plt.Axes,
+                          normalize: str = 'index',
+                          fmt: str = '%.1f%%',
+                          label_color: str = 'white',
+                          width: float = 0.9) -> plt.Axes:
         """
         Create a stacked bar chart showing the distribution of y across x categories.
         
@@ -190,7 +184,6 @@ class Leonardo:
             x: Column name for categories (y-axis in horizontal bars)
             y: Column name for values to count/compare
             ax: Matplotlib axes object to plot on
-            title: Title for the plot
             normalize: How to normalize the data ('index', 'columns', or None)
             fmt: Format string for bar labels
             label_color: Color of the bar labels
@@ -199,14 +192,19 @@ class Leonardo:
         Returns:
             The matplotlib axes object with the plot
         """
-        # Create plot with chained methods
-        pd.crosstab(data[x], data[y], normalize=normalize).mul(100).plot(
-            kind='barh', stacked=True, ax=ax, legend=False, width=width)
+        # Calculate crosstab once and cache it
+        crosstab = pd.crosstab(data[x], data[y], normalize=normalize).mul(100)
+        
+        # Plot the data
+        crosstab.plot(kind='barh', stacked=True, ax=ax, legend=False, width=width)
+        
+        # Configure axes
         ax.set_xlabel('Percentage (%)')
         ax.set_ylabel('')
-        ax.set_title(title)
-        for c in ax.containers:
-            ax.bar_label(c, fmt=fmt, label_type='center', color=label_color)
+        
+        # Add labels to all containers at once
+        for container in ax.containers:
+            ax.bar_label(container, fmt=fmt, label_type='center', color=label_color)
         
         return ax
     
@@ -294,13 +292,12 @@ class Leonardo:
 
     @staticmethod
     def dumbbell_plot(df: pd.DataFrame, 
-                            group_col: str, 
-                            category_col: str, 
-                            value_col: str, 
-                            ax: Optional[plt.Axes] = None,
-                            title: Optional[str] = None, 
-                            subtitle: Optional[str] = None, 
-                            figsize: Tuple[float, float] = (10, 4)) -> plt.Figure:
+                      group_col: str, 
+                      category_col: str, 
+                      value_col: str, 
+                      ax: Optional[plt.Axes] = None,
+                      figsize: Tuple[float, float] = (10, 4),
+                      labels: Optional[List[str]] = None) -> plt.Figure:
         """
         Create a dumbbell plot comparing two groups across categories.
         
@@ -310,9 +307,8 @@ class Leonardo:
             category_col: Column name containing the categories for y-axis
             value_col: Column name containing the values to plot
             ax: Optional matplotlib axis to plot on
-            title: Optional title for the plot
-            subtitle: Optional subtitle for the plot
             figsize: Width and height of the figure in inches
+            labels: Optional custom labels for the legend boxes (defaults to group values)
             
         Returns:
             The matplotlib Figure object with the plot
@@ -328,13 +324,11 @@ class Leonardo:
             fig = ax.figure
         
         # Remove spines
-        for s in ["right", "top", "bottom", "left"]:
-            ax.spines[s].set_visible(False)
+        Leonardo._clean_axes(ax)
         
         # Define range for y-axis and plot elements
         my_range = range(1, len(pivot_data) + 1)
-        ax.hlines(y=my_range, xmin=pivot_data[groups[0]], xmax=pivot_data[groups[1]], 
-                color='gray', alpha=0.4)
+        ax.hlines(y=my_range, xmin=pivot_data[groups[0]], xmax=pivot_data[groups[1]], color='gray', alpha=0.4)
         ax.scatter(pivot_data[groups[0]], my_range, s=100, label=groups[0])
         ax.scatter(pivot_data[groups[1]], my_range, s=100, label=groups[1])
         
@@ -346,22 +340,27 @@ class Leonardo:
         ax.set_yticks(my_range)
         ax.set_yticklabels(pivot_data.index)
         ax.tick_params(axis='both', which='both', length=0)
-        
-        # Add title and subtitle
-        if title:
-            ax.text(0, len(pivot_data) + 1.2, title, fontsize=14, fontweight='bold')
-        if subtitle:
-            ax.text(0, len(pivot_data) + 0.6, subtitle, fontsize=10)
+
+        # Add legend boxes
+        bbox_props = dict(boxstyle="round,pad=0.3", fc="white", ec="#cccccc", alpha=0.9)
+        legend_labels = labels if labels else groups
+        # Calculate positions based on label lengths
+        label1_width = len(legend_labels[0]) * 0.01
+        label2_width = len(legend_labels[1]) * 0.01
+        pos1 = 0.98 - label2_width - label1_width - 0.05
+        pos2 = 0.98 - label2_width
+        ax.text(pos1, 1.02, legend_labels[0], color='#0085a1', transform=ax.transAxes, fontsize=8, bbox=bbox_props)
+        ax.text(pos2, 1.02, legend_labels[1], color='#242728', transform=ax.transAxes, fontsize=8, bbox=bbox_props)
         
         return fig
     
     @staticmethod
     def lollipop_plot(df: pd.DataFrame, 
-                    value_col: str, 
-                    label_col: str, 
-                    ax: Optional[plt.Axes] = None, 
-                    n: int = 15, 
-                    markersize: int = 10) -> Tuple[Optional[plt.Figure], plt.Axes]:
+                      value_col: str, 
+                      label_col: str, 
+                      ax: Optional[plt.Axes] = None, 
+                      n: int = 15, 
+                      markersize: int = 10) -> Tuple[Optional[plt.Figure], plt.Axes]:
         """
         Create a lollipop plot showing values with markers connected to a baseline.
         
@@ -380,18 +379,19 @@ class Leonardo:
         if ax is None:
             fig, ax = plt.subplots(figsize=(10, 7))
         
+        # Get top n items
         temp = df[:n]
-        my_range = range(1, len(temp[label_col])+1)
+        values = temp[value_col].values
+        my_range = range(1, len(values)+1)
         
-        # Plot lines
-        for i, val in enumerate(temp[value_col]):
-            ax.plot([0, val], [my_range[i], my_range[i]], color='gray', alpha=0.8)
-            ax.plot(val, my_range[i], 'o', color='#0085a1', markersize=markersize)
+        # Plot lines and points in a vectorized way
+        ax.hlines(y=my_range, xmin=0, xmax=values, color='gray', alpha=0.8)
+        ax.scatter(values, my_range, s=markersize*10, color='#0085a1')
         
         # Remove spines
-        for s in ['top', 'right', 'bottom', 'left']:
-            ax.spines[s].set_visible(False)
+        Leonardo._clean_axes(ax)
         
+        # Set y-tick labels
         ax.set_yticks(my_range)
         ax.set_yticklabels(temp[label_col])
         
