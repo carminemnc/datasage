@@ -341,14 +341,16 @@ class Leonardo:
         ax.set_yticklabels(pivot_data.index)
         ax.tick_params(axis='both', which='both', length=0)
 
-        # Add legend boxes
+        # Legend boxes
         bbox_props = dict(boxstyle="round,pad=0.3", fc="white", ec="#cccccc", alpha=0.9)
         legend_labels = labels if labels else groups
-        # Calculate positions based on label lengths
-        label1_width = len(legend_labels[0]) * 0.01
-        label2_width = len(legend_labels[1]) * 0.01
-        pos1 = 0.98 - label2_width - label1_width - 0.05
-        pos2 = 0.98 - label2_width
+        
+        # Position labels with fixed spacing
+        label_spacing = 0.09  # Fixed space between labels
+        pos2 = 0.98 - len(str(legend_labels[1])) * 0.01  # Second label position
+        pos1 = pos2 - label_spacing - len(str(legend_labels[0])) * 0.01  # First label position
+
+        # adding text boxes
         ax.text(pos1, 1.02, legend_labels[0], color='#0085a1', transform=ax.transAxes, fontsize=8, bbox=bbox_props)
         ax.text(pos2, 1.02, legend_labels[1], color='#242728', transform=ax.transAxes, fontsize=8, bbox=bbox_props)
         
